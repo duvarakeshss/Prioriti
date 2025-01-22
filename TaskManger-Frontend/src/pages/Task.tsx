@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Navbar from "../components/navbar";
+import Navbar from "/src/components/Navbar";
 
 const Task = () => {
   const [tasks, setTasks] = useState([
