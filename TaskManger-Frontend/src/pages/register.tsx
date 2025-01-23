@@ -1,15 +1,31 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios'; // Import Axios for API calls
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Registered with:', username, password);
-    navigate('/');
+    try {
+      const response = await axios.post('http://localhost:5000/api/register', {
+        username,
+        password,
+      });
+
+      if (response.status === 201) {
+        console.log('Registration successful:', response.data);
+        navigate('/'); // Redirect to login
+      }
+    } catch (err) {
+      console.error('Registration failed:', err);
+      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      alert(errorMessage); // Simple popup window
+  }
+  
   };
 
   return (
@@ -17,6 +33,8 @@ const Register = () => {
       <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg p-8 w-full max-w-md mx-auto">
         <h1 className="text-3xl font-bold text-white text-center mb-6">Register</h1>
         <form className="flex flex-col" onSubmit={handleSubmit}>
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+
           <div className="relative mb-4">
             <input
               type="text"
@@ -24,6 +42,7 @@ const Register = () => {
               className="w-full px-12 py-3 text-white bg-transparent rounded-lg border border-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              required
             />
           </div>
 
@@ -34,6 +53,7 @@ const Register = () => {
               className="w-full px-12 py-3 text-white bg-transparent rounded-lg border border-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
 
