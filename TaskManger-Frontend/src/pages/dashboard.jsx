@@ -33,7 +33,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-3 gap-4 text-center mb-6">
           <div>
             <h3 className="text-4xl font-bold text-indigo-600">15</h3>
-            <p className=" text-white">Pending tasks</p>
+            <p className="text-white">Pending tasks</p>
           </div>
           <div>
             <h3 className="text-4xl font-bold text-indigo-600">56 hrs</h3>

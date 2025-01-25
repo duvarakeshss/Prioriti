@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
+const navbar = () => {
   const navigate = useNavigate();
 
   const handleHomeClick = () => {
@@ -48,4 +48,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default navbar;
