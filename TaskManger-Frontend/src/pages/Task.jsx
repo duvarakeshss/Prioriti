@@ -1,350 +1,186 @@
-// import { useState, useEffect } from "react";
-// import Navbar from "../components/Navbar";
-// import axios from "axios";
+import { useState, useEffect } from "react";
+import Navbar from "../components/Navbar";
+import axios from "axios";
 
-// type Task = {
-//   id: string;
-//   title: string;
-//   priority: number;
-//   status: string;
-//   startTime: string;
-//   endTime: string;
-//   totalTime: number;
-// };
+const TaskPage = () => {
+  const [tasks, setTasks] = useState([]);
+  const [selectedTasks, setSelectedTasks] = useState([]);
+  const [modalState, setModalState] = useState(null); // "add" or "edit"
+  const [currentTask, setCurrentTask] = useState(null);
+  const [newTask, setNewTask] = useState({
+    title: "",
+    priority: 1,
+    status: "Pending",
+    startTime: "",
+    endTime: "",
+  });
 
-// const Task = () => {
-//   const [tasks, setTasks] = useState<Task[]>([]);
-//   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-//   const [modalState, setModalState] = useState<"add" | "edit" | null>(null);
-//   const [currentTask, setCurrentTask] = useState<Task | null>(null);
-//   const [newTask, setNewTask] = useState<Omit<Task, "id">>({
-//     title: "",
-//     priority: 1,
-//     status: "Pending",
-//     startTime: "",
-//     endTime: "",
-//     totalTime: 0,
-//   });
-//   const [error, setError] = useState<string | null>(null);
+  // Fetch tasks from the server
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/tasks")
+      .then((response) => setTasks(response.data))
+      .catch((error) => console.error("Error fetching tasks:", error));
+  }, []);
 
-//   const token = localStorage.getItem("authToken");
+  // Handle Add or Edit Task
+  const saveTask = async () => {
+    if (!newTask.title || !newTask.startTime || !newTask.endTime) {
+      alert("Please fill in all fields.");
+      return;
+    }
 
-//   // Fetch tasks from API
-//   useEffect(() => {
-//     const fetchTasks = async () => {
-//       if (!token) {
-//         console.error("No token found");
-//         return;
-//       }
-    
-//       try {
-//         const response = await axios.get("http://localhost:5000/api/tasks", {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-    
-//         if (Array.isArray(response.data.tasks)) {
-//           setTasks(response.data.tasks);
-//         } else {
-//           console.error("API did not return an array of tasks");
-//         }
-//       } catch (error: any) {
-//         console.error("Error fetching tasks:", error.response || error);
-//         if (error.response && error.response.status === 401) {
-//           alert("Unauthorized: Please log in again.");
-//         }
-//       }
-//     };
-    
-  
-//     fetchTasks();
-//   }, [token]);
-  
+    const endpoint = modalState === "add" ? "post" : "put";
+    const url =
+      modalState === "add"
+        ? "http://localhost:8000/api/tasks"
+        : `http://localhost:8000/api/tasks/${currentTask?.id}`;
 
-//   const handleCheckboxChange = (id: string) => {
-//     setSelectedTasks((prevSelected) =>
-//       prevSelected.includes(id)
-//         ? prevSelected.filter((taskId) => taskId !== id)
-//         : [...prevSelected, id]
-//     );
-//   };
+    try {
+      const response = await axios[endpoint](url, modalState === "add" ? newTask : currentTask);
 
-//   const handleDeleteSelected = async () => {
-//     if (selectedTasks.length === 0) return;
+      if (modalState === "add") {
+        setTasks((prevTasks) => [...prevTasks, response.data]);
+        resetForm();
+      } else {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => (task.id === currentTask?.id ? response.data : task))
+        );
+      }
 
-//     try {
-//       await axios.delete("http://localhost:5000/api/tasks", {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//         data: { ids: selectedTasks },
-//       });
-//       setTasks((prevTasks) =>
-//         prevTasks.filter((task) => !selectedTasks.includes(task.id))
-//       );
-//       setSelectedTasks([]);
-//     } catch (error) {
-//       console.error("Error deleting tasks:", error);
-//     }
-//   };
+      setModalState(null);
+    } catch (error) {
+      console.error(`Error ${modalState === "add" ? "adding" : "updating"} task:`, error);
+    }
+  };
 
-//   const handleAddTask = async () => {
-//     if (!newTask.title || !newTask.startTime || !newTask.endTime) {
-//       setError("Please fill all the fields.");
-//       return;
-//     }
+  // Reset new task form
+  const resetForm = () => {
+    setNewTask({ title: "", priority: 1, status: "Pending", startTime: "", endTime: "" });
+    setCurrentTask(null);
+  };
 
-//     try {
-//       const response = await axios.post(
-//         "http://localhost:5000/api/tasks",
-//         newTask,
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-//       console.log("Task added successfully:", response.data); // Log the response
-//       setTasks((prevTasks) => [...prevTasks, response.data]);
-//       closeModal();
-//     } catch (error) {
-//       console.error("Error adding task:", error);
-//       setError("Failed to add task.");
-//     }
-//   };
+  return (
+    <div className="min-h-screen bg-neutral-950 text-white">
+      <Navbar />
 
-//   const handleEditTask = async () => {
-//     if (!currentTask) return;
+      <div className="container mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-4">Task List</h1>
 
-//     try {
-//       const response = await axios.put(
-//         `http://localhost:5000/api/tasks/${currentTask.id}`,
-//         currentTask,
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-//       setTasks((prevTasks) =>
-//         prevTasks.map((task) =>
-//           task.id === currentTask.id ? { ...task, ...response.data } : task
-//         )
-//       );
-//       closeModal();
-//     } catch (error) {
-//       console.error("Error editing task:", error);
-//     }
-//   };
+        <div className="flex justify-between mb-4">
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={() => setModalState("add")}
+          >
+            + Add Task
+          </button>
+          <button
+            className="bg-red-500 text-white px-4 py-2 rounded"
+            onClick={() => {
+              // Delete selected tasks logic
+            }}
+            disabled={selectedTasks.length === 0}
+          >
+            Delete Selected
+          </button>
+        </div>
 
-//   const closeModal = () => {
-//     setModalState(null);
-//     setCurrentTask(null);
-//     resetNewTask();
-//     setError(null);
-//   };
+        {/* Task Table */}
+        <table className="table-auto w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-gray-800">
+              <th>Select</th>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <tr key={task.id} className="hover:bg-gray-700">
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedTasks.includes(task.id)}
+                    onChange={() => {
+                      if (selectedTasks.includes(task.id)) {
+                        setSelectedTasks(selectedTasks.filter((id) => id !== task.id));
+                      } else {
+                        setSelectedTasks([...selectedTasks, task.id]);
+                      }
+                    }}
+                  />
+                </td>
+                <td>{task.id}</td>
+                <td>{task.title}</td>
+                <td>{task.priority}</td>
+                <td>{task.status}</td>
+                <td>{task.startTime}</td>
+                <td>{task.endTime}</td>
+                <td>{task.totalTime}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-//   const resetNewTask = () => {
-//     setNewTask({
-//       title: "",
-//       priority: 1,
-//       status: "Pending",
-//       startTime: "",
-//       endTime: "",
-//       totalTime: 0,
-//     });
-//   };
+      {/* Add/Edit Modal */}
+      {modalState && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>{modalState === "add" ? "Add New Task" : "Edit Task"}</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveTask();
+              }}
+            >
+              <div>
+                <label>Title</label>
+                <input
+                  type="text"
+                  value={modalState === "add" ? newTask.title : currentTask?.title}
+                  onChange={(e) => {
+                    if (modalState === "add") {
+                      setNewTask({ ...newTask, title: e.target.value });
+                    } else if (currentTask) {
+                      setCurrentTask({ ...currentTask, title: e.target.value });
+                    }
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <label>Status</label>
+                <select
+                  value={modalState === "add" ? newTask.status : currentTask?.status}
+                  onChange={(e) => {
+                    const status = e.target.value;
+                    if (modalState === "add") {
+                      setNewTask({ ...newTask, status });
+                    } else if (currentTask) {
+                      setCurrentTask({ ...currentTask, status });
+                    }
+                  }}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
+                Save
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-//   return (
-//     <div className="relative min-h-screen text-white">
-//       {/* Background Gradient */}
-//       <div className="absolute top-0 z-[-2] h-screen w-screen bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
-
-//       {/* Navbar */}
-//       <Navbar />
-
-//       {/* Task List */}
-//       <div className="container mx-auto p-6">
-//         <h1 className="text-2xl font-bold mb-6">Task List</h1>
-//         <div className="flex justify-between mb-4">
-//           <button
-//             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-//             onClick={() => setModalState("add")}
-//           >
-//             + Add Task
-//           </button>
-//           <button
-//             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-//             onClick={handleDeleteSelected}
-//             disabled={selectedTasks.length === 0}
-//           >
-//             Delete Selected
-//           </button>
-//         </div>
-//         <table className="table-auto w-full border-collapse border border-gray-700 text-sm">
-//           <thead>
-//             <tr className="bg-gray-800">
-//               <th className="border border-gray-700 px-4 py-2">Select</th>
-//               <th className="border border-gray-700 px-4 py-2">Task ID</th>
-//               <th className="border border-gray-700 px-4 py-2">Title</th>
-//               <th className="border border-gray-700 px-4 py-2">Priority</th>
-//               <th className="border border-gray-700 px-4 py-2">Status</th>
-//               <th className="border border-gray-700 px-4 py-2">Start Time</th>
-//               <th className="border border-gray-700 px-4 py-2">End Time</th>
-//               <th className="border border-gray-700 px-4 py-2">
-//                 Total Time (hrs)
-//               </th>
-//               <th className="border border-gray-700 px-4 py-2">Edit</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {tasks.length > 0 ? (
-//               tasks.map((task) => (
-//                 <tr key={task.id} className="hover:bg-gray-700">
-//                   <td className="border border-gray-700 px-4 py-2 text-center">
-//                     <input
-//                       type="checkbox"
-//                       checked={selectedTasks.includes(task.id)}
-//                       onChange={() => handleCheckboxChange(task.id)}
-//                       className="form-checkbox text-blue-500"
-//                     />
-//                   </td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.id}</td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.title}</td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.priority}</td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.status}</td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.startTime}</td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.endTime}</td>
-//                   <td className="border border-gray-700 px-4 py-2">{task.totalTime}</td>
-//                   <td className="border border-gray-700 px-4 py-2">
-//                     <button
-//                       className="text-blue-400 hover:underline"
-//                       onClick={() => {
-//                         setCurrentTask(task);
-//                         setModalState("edit");
-//                       }}
-//                     >
-//                       Edit
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))
-//             ) : (
-//               <tr>
-//                 <td colSpan={9} className="text-center text-gray-500">
-//                   No tasks found
-//                 </td>
-//               </tr>
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       {/* Add/Edit Task Modal */}
-//       {modalState && (
-//         <div className="fixed inset-0 flex justify-center items-center bg-gray-700 bg-opacity-50">
-//           <div className="bg-white p-6 rounded-lg w-96">
-//             <h2 className="text-xl font-bold mb-4">
-//               {modalState === "add" ? "Add New Task" : "Edit Task"}
-//             </h2>
-//             <input
-//               type="text"
-//               className="w-full p-2 mb-4 border text-black"
-//               placeholder="Task Title"
-//               value={
-//                 modalState === "add" ? newTask.title : currentTask?.title || ""
-//               }
-//               onChange={(e) =>
-//                 modalState === "add"
-//                   ? setNewTask({ ...newTask, title: e.target.value })
-//                   : setCurrentTask({ ...currentTask!, title: e.target.value })
-//               }
-//             />
-//             <input
-//               type="number"
-//               className="w-full p-2 mb-4 border text-black"
-//               placeholder="Priority (1-5)"
-//               value={
-//                 modalState === "add"
-//                   ? newTask.priority
-//                   : currentTask?.priority || 1
-//               }
-//               onChange={(e) =>
-//                 modalState === "add"
-//                   ? setNewTask({
-//                       ...newTask,
-//                       priority: Math.min(5, Math.max(1, +e.target.value)),
-//                     })
-//                   : setCurrentTask({
-//                       ...currentTask!,
-//                       priority: Math.min(5, Math.max(1, +e.target.value)),
-//                     })
-//               }
-//             />
-//             <select
-//               className="w-full p-2 mb-4 border text-black"
-//               value={
-//                 modalState === "add"
-//                   ? newTask.status
-//                   : currentTask?.status || "Pending"
-//               }
-//               onChange={(e) =>
-//                 modalState === "add"
-//                   ? setNewTask({ ...newTask, status: e.target.value })
-//                   : setCurrentTask({ ...currentTask!, status: e.target.value })
-//               }
-//             >
-//               <option value="Pending">Pending</option>
-//               <option value="In Progress">In Progress</option>
-//               <option value="Completed">Completed</option>
-//             </select>
-//             <input
-//               type="datetime-local"
-//               className="w-full p-2 mb-4 border text-black"
-//               value={
-//                 modalState === "add"
-//                   ? newTask.startTime
-//                   : currentTask?.startTime || ""
-//               }
-//               onChange={(e) =>
-//                 modalState === "add"
-//                   ? setNewTask({ ...newTask, startTime: e.target.value })
-//                   : setCurrentTask({ ...currentTask!, startTime: e.target.value })
-//               }
-//             />
-//             <input
-//               type="datetime-local"
-//               className="w-full p-2 mb-4 border text-black"
-//               value={
-//                 modalState === "add"
-//                   ? newTask.endTime
-//                   : currentTask?.endTime || ""
-//               }
-//               onChange={(e) =>
-//                 modalState === "add"
-//                   ? setNewTask({ ...newTask, endTime: e.target.value })
-//                   : setCurrentTask({ ...currentTask!, endTime: e.target.value })
-//               }
-//             />
-//             <button
-//               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-//               onClick={modalState === "add" ? handleAddTask : handleEditTask}
-//             >
-//               {modalState === "add" ? "Add Task" : "Save Changes"}
-//             </button>
-//             <button
-//               className="ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-//               onClick={closeModal}
-//             >
-//               Cancel
-//             </button>
-//             {error && <p className="text-red-500 mt-4">{error}</p>}
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Task;
+export default TaskPage;

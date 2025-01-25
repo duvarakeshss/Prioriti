@@ -8,7 +8,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState(''); // State for error message
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
