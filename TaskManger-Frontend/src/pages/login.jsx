@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from "axios";
+import axios from 'axios';
 
 const Login = () => {
   const [userName, setUsername] = useState('');
@@ -8,7 +8,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState(''); // State for error message
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -18,15 +18,14 @@ const Login = () => {
         });
         if (response.data.success) {
           navigate('/dashboard');
-        }   else {
+        } else {
           setErrorMessage(response.data.message); // Display error message in the UI
-       }
-    }catch (error) {
+        }
+    } catch (error) {
       console.error('Error during login:', error);
       setErrorMessage('An error occurred. Please try again.'); // Handle error in the UI
     }
   };
-
   return (
     <div className="absolute inset-0 -z-10 h-full w-full items-center px-5 py-24 [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)]">
       <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg p-8 w-full max-w-md mx-auto">
