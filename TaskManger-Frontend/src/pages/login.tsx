@@ -1,40 +1,31 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [userName, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState(''); // State for error message
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store the JWT token in localStorage
-        localStorage.setItem('authToken', data.token);
-
-        // Redirect to dashboard on successful login
-        navigate('/dashboard');
-      } else {
-        alert(data.message);
-      }
+        const response = await axios.post("http://localhost:8000/api/auth/user/login", {
+          userName,
+          password,
+        });
+        if (response.data.success) {
+          navigate('/dashboard');
+        } else {
+          setErrorMessage(response.data.message); // Display error message in the UI
+        }
     } catch (error) {
       console.error('Error during login:', error);
-      alert('An error occurred. Please try again.');
+      setErrorMessage('An error occurred. Please try again.'); // Handle error in the UI
     }
   };
-
   return (
     <div className="absolute inset-0 -z-10 h-full w-full items-center px-5 py-24 [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)]">
       <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg p-8 w-full max-w-md mx-auto">
@@ -45,7 +36,7 @@ const Login = () => {
               type="text"
               placeholder="Username"
               className="w-full px-12 py-3 text-white bg-transparent rounded-lg border border-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
-              value={username}
+              value={userName}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
@@ -67,6 +58,10 @@ const Login = () => {
             Login
           </button>
         </form>
+
+        {errorMessage && (
+          <div className="mt-4 text-center text-red-500">{errorMessage}</div> // Display error message
+        )}
 
         <div className="text-center mt-6">
           <p className="text-sm text-white">

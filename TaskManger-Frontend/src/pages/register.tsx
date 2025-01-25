@@ -1,33 +1,37 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Import Axios for API calls
+import axios from 'axios';
 
 const Register = () => {
-  const [username, setUsername] = useState('');
+  const [userName, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(''); 
+
     try {
-      const response = await axios.post('http://localhost:5000/api/register', {
-        username,
+      const response = await axios.post('http://localhost:8000/api/auth/user/register', {
+        userName,
         password,
       });
 
-      if (response.status === 201) {
-        console.log('Registration successful:', response.data);
-        navigate('/'); // Redirect to login
+      if (response.data.success) {
+        navigate('/'); 
       }
     } catch (err) {
-      console.error('Registration failed:', err);
-      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
-      alert(errorMessage); // Simple popup window
-  }
-  
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message || 'Registration failed. Please try again.';
+        setError(errorMessage);
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+        console.error('Unexpected error:', err);
+      }
+    }
   };
-
   return (
     <div className="absolute inset-0 -z-10 h-full w-full items-center px-5 py-24 [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#63e_100%)]">
       <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg shadow-lg p-8 w-full max-w-md mx-auto">
@@ -40,7 +44,7 @@ const Register = () => {
               type="text"
               placeholder="Username"
               className="w-full px-12 py-3 text-white bg-transparent rounded-lg border border-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
-              value={username}
+              value={userName}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
