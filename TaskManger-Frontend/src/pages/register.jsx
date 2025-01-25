@@ -13,7 +13,7 @@ const Register = () => {
     setError(''); 
 
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/user/register', {
+      const response = await axios.post('https://todomanager-hnu2.onrender.com/api/auth/user/register', {
         userName,
         password,
       });

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 
-const TaskPage = () => {
+const Task = () => {
   const [tasks, setTasks] = useState([]);
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [modalState, setModalState] = useState(null); // "add" or "edit"
@@ -18,7 +18,7 @@ const TaskPage = () => {
   // Fetch tasks from the server
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/tasks")
+      .get("https://todomanager-hnu2.onrender.com/api/task/getTask")
       .then((response) => setTasks(response.data))
       .catch((error) => console.error("Error fetching tasks:", error));
   }, []);
@@ -33,8 +33,8 @@ const TaskPage = () => {
     const endpoint = modalState === "add" ? "post" : "put";
     const url =
       modalState === "add"
-        ? "http://localhost:8000/api/tasks"
-        : `http://localhost:8000/api/tasks/${currentTask?.id}`;
+        ? "https://todomanager-hnu2.onrender.com/api/task/createTask"
+        : `https://todomanager-hnu2.onrender.com/api/task/createTask${currentTask?.id}`;
 
     try {
       const response = await axios[endpoint](url, modalState === "add" ? newTask : currentTask);
@@ -183,4 +183,4 @@ const TaskPage = () => {
   );
 };
 
-export default TaskPage;
+export default Task;
