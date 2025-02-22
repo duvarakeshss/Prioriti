@@ -34,7 +34,7 @@ Ensure you have the following installed:
    ```sh
    cd backend
    npm install
-   nodemon run server
+   npm run server
    ```
 
 3. **Frontend Setup:**
