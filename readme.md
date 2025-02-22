@@ -1,4 +1,4 @@
-# Prioriti - Full-Stack Task Manager
+# Prioriti - Task Manager
 
 ## Overview
 Prioriti is a full-stack task management application built using Express.js, React.js, and MongoDB. It allows users to create tasks, set priorities, and track deadlines while ensuring secure authentication through JWT.
