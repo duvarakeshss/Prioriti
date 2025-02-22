@@ -1,65 +1,72 @@
 import UserModel from "../models/user.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Login with Username & Password
 const loginUser = async (req, res) => {
-    
     const { userName, password } = req.body;
+
     try {
-        
-        const user = await UserModel.findOne({ username: userName });
-        
+        const user = await UserModel.findOne({ username: userName.toLowerCase() });
+
         if (!user) {
-            return res.json({ success: false, message: "User does not exist" });
+            return res.status(404).json({ success: false, message: "User does not exist" });
         }
+
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
-            return res.json({ success: false, message: "Enter a valid Password" });
+            return res.status(401).json({ success: false, message: "Invalid password" });
         }
 
-    
-        
-        return res.json({ success: true , role: user.role});
+        // Generate JWT Token
+        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+
+        return res.json({ success: true, token, role: user.role });
 
     } catch (error) {
-        console.log(error);
-        return res.json({ success: false, message: "Error in login" });
+        console.error("Login Error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
-}
+};
+
+// Register New User
 const registerUser = async (req, res) => {
     const { userName, password } = req.body;
-    
-
     try {
-        // Check if required fields are missing
         if (!userName || !password) {
-            return res.json({ success: false, message: "All fields are required" });
+            return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
-        const exists = await UserModel.findOne({ username: userName });
+        const exists = await UserModel.findOne({ username: userName.toLowerCase() });
         if (exists) {
-            return res.json({ success: false, message: "User already exists" });
+            return res.status(409).json({ success: false, message: "User already exists" });
         }
 
-        // Validate password length
-        if (password && password.length < 8) {
-            return res.json({ success: false, message: "Enter a strong password" });
+        if (password.length < 8 || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+            return res.status(400).json({ success: false, message: "Password must be at least 8 characters long and include an uppercase letter and a number" });
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newUser = new UserModel({
-            username: userName,
+            username: userName.toLowerCase(),
             password: hashedPassword,
         });
-        const user = await newUser.save();
 
-        return res.json({ success: true });
+        await newUser.save();
+
+        return res.status(201).json({ success: true, message: "User registered successfully" });
 
     } catch (error) {
-        console.log(error);
-        return res.json({ success: false, message: "Error in adding user" });
+        console.error("Registration Error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
-export { loginUser, registerUser };
+export { loginUser, registerUser};

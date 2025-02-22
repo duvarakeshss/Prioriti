@@ -1,25 +1,29 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Eye, EyeOff } from 'lucide-react';
+
+const baseUrl = import.meta.env.VITE_SERVER_URL; 
 
 const Login = () => {
   const [userName, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState(''); // State for error message
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword,setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-        const response = await axios.post("https://todomanager-hnu2.onrender.com/api/auth/user/login", {
+        const response = await axios.post(`${baseUrl}/api/auth/user/login`, {
           userName,
           password,
         });
         if (response.data.success) {
           navigate('/dashboard');
         } else {
-          setErrorMessage(response.data.message); // Display error message in the UI
+          setErrorMessage(response.data.message);
         }
     } catch (error) {
       console.error('Error during login:', error);
@@ -43,12 +47,19 @@ const Login = () => {
 
           <div className="relative mb-4">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'} // Toggle visibility
               placeholder="Password"
               className="w-full px-12 py-3 text-white bg-transparent rounded-lg border border-white focus:ring-2 focus:ring-blue-300 focus:outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-3 text-white"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           <button
