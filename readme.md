@@ -32,16 +32,16 @@ Ensure you have the following installed:
 
 2. **Backend Setup:**
    ```sh
-   cd server
+   cd backend
    npm install
-   npm start
+   nodemon run server
    ```
 
 3. **Frontend Setup:**
    ```sh
-   cd client
+   cd TaskManager-Frontend
    npm install
-   npm start
+   npm run dev
    ```
 
 4. **Environment Variables:**
